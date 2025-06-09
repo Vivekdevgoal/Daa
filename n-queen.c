@@ -1,70 +1,85 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
-int **board;
+#define MAX 20  // Max board size
+
+int board[MAX][MAX];
+int positions[MAX]; // Store column position for each row
 int N;
 
-bool isSafe(int row, int col) {
-    for (int i = 0; i < col; i++)
-        if (board[row][i])
-            return false;
+int isSafe(int row, int col) {
+    int i, j;
 
-    for (int i = row, j = col; i >= 0 && j >= 0; i--, j--)
+    // Check column
+    for (i = 0; i < row; i++)
+        if (board[i][col])
+            return 0;
+
+    // Check upper left diagonal
+    for (i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
         if (board[i][j])
-            return false;
+            return 0;
 
-    for (int i = row, j = col; i < N && j >= 0; i++, j--)
+    // Check upper right diagonal
+    for (i = row - 1, j = col + 1; i >= 0 && j < N; i--, j++)
         if (board[i][j])
-            return false;
+            return 0;
 
-    return true;
+    return 1;
 }
 
-bool solveNQ(int col) {
-    if (col >= N)
-        return true;
+int placeQueens(int row) {
+    if (row == N)
+        return 1;
 
-    for (int i = 0; i < N; i++) {
-        if (isSafe(i, col)) {
-            board[i][col] = 1;
-            if (solveNQ(col + 1))
-                return true;
-            board[i][col] = 0;
+    for (int col = 0; col < N; col++) {
+        if (isSafe(row, col)) {
+            board[row][col] = 1;
+            positions[row] = col + 1; // 1-based position
+
+            if (placeQueens(row + 1))
+                return 1;
+
+            board[row][col] = 0;
+            positions[row] = 0;
         }
     }
-    return false;
+
+    return 0;
 }
 
-void printSolution() {
+void printBoard() {
+    printf("\nSolution Board:\n");
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++)
-            printf("%d ", board[i][j]);
+            printf("%c ", board[i][j] ? 'Q' : '.');
         printf("\n");
     }
 }
 
 int main() {
     printf("Enter the number of queens (N): ");
-    scanf("%d", &N);
-
-    // Dynamic memory allocation
-    board = (int **)malloc(N * sizeof(int *));
-    for (int i = 0; i < N; i++)
-        board[i] = (int *)calloc(N, sizeof(int));
-
-    if (!solveNQ(0)) {
-        printf("Solution does not exist\n");
-    } else {
-        printf("One of the possible solutions:\n");
-        printSolution();
+    if (scanf("%d", &N) != 1 || N <= 0 || N > MAX) {
+        printf("Please enter a valid positive integer (1-%d).\n", MAX);
+        return 1;
     }
 
-    // Free memory
-    for (int i = 0; i < N; i++)
-        free(board[i]);
-    free(board);
+    // Initialize board and position array
+    for (int i = 0; i < N; i++) {
+        positions[i] = 0;
+        for (int j = 0; j < N; j++)
+            board[i][j] = 0;
+    }
+
+    if (placeQueens(0)) {
+        printBoard();
+        printf("\nColumn positions of queens per row:\n");
+        for (int i = 0; i < N; i++)
+            printf("%d ", positions[i]);
+        printf("\n");
+    } else {
+        printf("No solution exists.\n");
+    }
 
     return 0;
 }
-
